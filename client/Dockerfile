@@ -5,17 +5,17 @@ FROM node:alpine
 # where our Next.js app will live
 RUN mkdir -p /usr/src/app
 
-# Set /app as the working directory
+# Set /usr/src/app as the working directory
 WORKDIR /usr/src/app
 
 # Copy package.json and package-lock.json
-# to the /app working directory
+# to the /usr/src/app working directory
 COPY package*.json /usr/src/app
 
-# Install dependencies in /app
+# Install dependencies in /usr/src/app
 RUN npm install
 
-# Copy the rest of our Next.js folder into /app
+# Copy the rest of our Next.js folder into /usr/src/app
 COPY . /usr/src/app
 
 # Ensure port 3000 is accessible to our system

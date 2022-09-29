@@ -1,6 +1,17 @@
-version: "3.8"
+version: "2.4"
 
 services:
+  client:
+    container_name: client
+    build: ./client
+    restart: always
+    volumes:
+      - ./client:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - 3000:3000
+    stdin_open: true
+    tty: true
   server:
     container_name: server
     build:
@@ -46,17 +57,6 @@ services:
     depends_on:
       - postgres
       - server
-  client:
-    container_name: client
-    build: ./client
-    restart: always
-    volumes:
-      - ./client:/usr/src/app
-      - /usr/src/app/node_modules
-    ports:
-      - 3000:3000
-    stdin_open: true
-    tty: true
 #   redis:
 #     image: "redislabs/rejson:2.0.0"
 #     ports:
