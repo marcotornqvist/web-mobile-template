@@ -16,6 +16,11 @@
     "noImplicitAny": true,
     "strictBindCallApply": true,
     "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@app/database": ["src/database/*"],
+      "@app/prisma/*": ["src/prisma/*"],
+      "@app/utils": ["src/utils"]
+    }
   }
 }
