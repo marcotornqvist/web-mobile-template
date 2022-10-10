@@ -1,13 +1,10 @@
-import { PrismaService } from '@app/prisma/prisma.service';
+import { PrismaService } from 'prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
 import { Todo } from '@prisma/client';
 
-
 @Injectable()
 export class TodosService {
-  constructor(
-    private prisma: PrismaService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async getAllTodos(): Promise<Todo[]> {
     return this.prisma.todo.findMany({
