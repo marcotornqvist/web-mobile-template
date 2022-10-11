@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from 'users/users.service';
 import { passportJwtSecret } from 'jwks-rsa';
+import { Request } from '@nestjs/common';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -13,9 +14,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        (request: any) => {
-          return request.cookies.Authentication;
-        },
+        ExtractJwt.fromHeader('idtoken'),
       ]),
 
       secretOrKeyProvider: passportJwtSecret({
@@ -34,7 +33,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    console.log(payload);
+    // console.log(payload);
     try {
       return await this.usersService.getUserById(payload['cognito:username']);
     } catch (err) {

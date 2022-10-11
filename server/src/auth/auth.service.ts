@@ -10,7 +10,6 @@ import {
   CognitoUserPool,
   CognitoUserAttribute,
   CognitoUserSession,
-  CognitoIdToken,
   CognitoRefreshToken,
 } from 'amazon-cognito-identity-js';
 import { RegisterUserDto } from './dto/register-user.dto';
@@ -19,7 +18,6 @@ import { ConfigService } from '@nestjs/config';
 import { Response, Request } from 'express';
 import { PrismaService } from 'prisma/prisma.service';
 import { UsersService } from 'users/users.service';
-// import { Request } from 'express-jwt';
 
 @Injectable()
 export class AuthService {
@@ -139,22 +137,17 @@ export class AuthService {
     });
   }
 
-  // async logout(response: Response) {
-  //   this.usersService.removeAuthToken(response);
-  // }
+  async logout(response: Response) {
+    this.usersService.removeAuthToken(response);
+  }
 
   private setAuthToken(result: CognitoUserSession, response: Response) {
-    // const payload = result.getIdToken().payload;
-    const token = result.getIdToken().getJwtToken();
-    // const payload = result.getAccessToken().payload;
-
-    // const userId = result.getIdToken().payload['cognito:username'];
-    // const token = result.getRefreshToken().getToken();
+    const userId = result.getIdToken().payload['cognito:username'];
+    const token = result.getRefreshToken().getToken();
 
     // Expiry date is in 30 days, which is the default expiry date for refreshToken in AWS Cognito.
     const date = new Date();
     const expires = new Date(date.setDate(date.getDate() + 30));
-
     // const isProduction = process.env.NODE_ENV === 'production';
 
     response.cookie('Authentication', token, {
@@ -165,12 +158,12 @@ export class AuthService {
       // secure: isProduction,
     });
 
-    // response.cookie('UserId', userId, {
-    //   httpOnly: true,
-    //   path: '/',
-    //   expires,
-    //   // sameSite: isProduction ? 'none' : false,
-    //   // secure: isProduction,
-    // });
+    response.cookie('UserId', userId, {
+      httpOnly: true,
+      path: '/',
+      expires,
+      // sameSite: isProduction ? 'none' : false,
+      // secure: isProduction,
+    });
   }
 }

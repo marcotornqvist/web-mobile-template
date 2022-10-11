@@ -11,7 +11,6 @@ export class AppController {
   @Get()
   @UseGuards(JwtAuthGuard)
   getHello(@CurrentUser() user: User): string {
-    console.log(user);
     return this.appService.getHello();
   }
 }

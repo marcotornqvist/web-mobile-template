@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 // import { CurrentUser } from './current-user.decorator';
 import { User } from '@prisma/client';
@@ -24,11 +24,20 @@ export class AuthController {
   }
 
   @Post('login')
-  // @UseGuards(LocalAuthGuard)
   async login(
     @Body() body: LoginUserDto,
     @Res({ passthrough: true }) response: Response,
   ) {
     return await this.authService.login(body, response);
+  }
+
+  @Post('refresh')
+  async refresh(@Req() request: Request) {
+    return await this.authService.refresh(request);
+  }
+
+  @Post('logout')
+  logout(@Res({ passthrough: true }) response: Response) {
+    return this.authService.logout(response);
   }
 }
