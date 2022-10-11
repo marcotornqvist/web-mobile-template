@@ -1,7 +1,21 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { TodosService } from './todos.service';
-import { Todo } from '@prisma/client';
+import { Todo, User } from '@prisma/client';
+import { TodoEntity } from './entities/todo.entity';
+import { TodoDto } from './dto/todo.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('todos')
 @ApiTags('Todos')
@@ -10,61 +24,85 @@ export class TodosController {
 
   @Get()
   // @UseGuards(JwtAuthGuard)
-  // @ApiOkResponse({ type: TodoEntity, isArray: true })
-  async getAllTodos(): Promise<Todo[]> {
+  @ApiOkResponse({ type: TodoEntity, isArray: true })
+  getAllTodos(): Promise<Todo[]> {
     return this.todosService.getAllTodos();
   }
 
-  // @Get('me')
+  @Get('me')
   // @UseGuards(JwtAuthGuard)
-  // @ApiOkResponse({ type: TodoEntity, isArray: true })
-  // async getAllTodosByMe(@CurrentUser() user: User): Promise<Todo[]> {
-  //   return this.todosService.getAllTodosByMe(user.id);
-  // }
+  @ApiOkResponse({ type: TodoEntity, isArray: true })
+  getAllTodosByMe(): // @CurrentUser() user: User
+  Promise<Todo[]> {
+    const userId = '74783f1d-22a1-4cb8-bb80-dff508883a23';
+    return this.todosService.getAllTodosByMe(userId);
+  }
 
-  // @Post()
+  @Post()
   // @UseGuards(JwtAuthGuard)
-  // @ApiCreatedResponse({ type: TodoEntity })
-  // async createTodo(
-  //   @Body() body: CreateTodoDto,
-  //   @Req() request: Request,
-  //   @CurrentUser() user: User,
-  // ): Promise<Todo> {
-  //   return this.todosService.createTodo(
-  //     user.id,
-  //     body,
-  //     request.cookies?.Authentication,
-  //   );
-  // }
+  @ApiCreatedResponse({ type: TodoEntity })
+  createTodo(
+    @Body() body: TodoDto,
+    @Req() request: Request,
+    // @CurrentUser() user: User,
+  ): Promise<Todo> {
+    const userId = '74783f1d-22a1-4cb8-bb80-dff508883a23';
 
-  // @Patch(':id')
-  // @UseGuards(JwtAuthGuard)
-  // @ApiOkResponse({ type: TodoEntity })
-  // async updateTodo(
-  //   @Param('id', ParseUUIDPipe) id: string,
-  //   @Body() body: CreateTodoDto,
-  //   @CurrentUser() user: User,
-  // ): Promise<Todo> {
-  //   return this.todosService.updateTodo(user.id, id, body);
-  // }
+    return this.todosService.createTodo(
+      // user.id,
+      userId,
+      body,
+      // request.cookies?.Authentication,
+    );
+  }
 
-  // @Patch('toggleIsCompleted/:id')
+  @Patch(':id')
   // @UseGuards(JwtAuthGuard)
-  // @ApiOkResponse({ type: Boolean })
-  // async toggleIsCompletedTodo(
-  //   @Param('id', ParseUUIDPipe) id: string,
-  //   @CurrentUser() user: User,
-  // ): Promise<boolean> {
-  //   return this.todosService.toggleIsCompletedTodo(user.id, id);
-  // }
+  @ApiOkResponse({ type: TodoEntity })
+  updateTodo(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: TodoDto,
+    // @CurrentUser() user: User,
+  ): Promise<Todo> {
+    const userId = '74783f1d-22a1-4cb8-bb80-dff508883a23';
 
-  // @Delete(':id')
+    return this.todosService.updateTodo(
+      // user.id,
+      userId,
+      id,
+      body,
+    );
+  }
+
+  @Patch('toggleIsCompleted/:id')
   // @UseGuards(JwtAuthGuard)
-  // @ApiOkResponse({ type: Boolean })
-  // async deleteTodo(
-  //   @Param('id', ParseUUIDPipe) id: string,
-  //   @CurrentUser() user: User,
-  // ): Promise<boolean> {
-  //   return this.todosService.deleteTodo(user.id, id);
-  // }
+  @ApiOkResponse({ type: Boolean })
+  toggleIsCompletedTodo(
+    @Param('id', ParseUUIDPipe) id: string,
+    // @CurrentUser() user: User,
+  ): Promise<boolean> {
+    const userId = '74783f1d-22a1-4cb8-bb80-dff508883a23';
+
+    return this.todosService.toggleIsCompletedTodo(
+      userId,
+      // user.id,
+      id,
+    );
+  }
+
+  @Delete(':id')
+  // @UseGuards(JwtAuthGuard)
+  @ApiOkResponse({ type: Boolean })
+  deleteTodo(
+    @Param('id', ParseUUIDPipe) id: string,
+    // @CurrentUser() user: User,
+  ): Promise<boolean> {
+    const userId = '74783f1d-22a1-4cb8-bb80-dff508883a23';
+
+    return this.todosService.deleteTodo(
+      userId,
+      // user.id,
+      id,
+    );
+  }
 }
