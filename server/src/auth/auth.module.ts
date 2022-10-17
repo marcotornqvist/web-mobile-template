@@ -5,16 +5,9 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import * as cookieParser from 'cookie-parser';
-import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
-    PrismaModule,
-    UsersModule,
-  ],
+  imports: [PrismaModule, UsersModule],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
 })

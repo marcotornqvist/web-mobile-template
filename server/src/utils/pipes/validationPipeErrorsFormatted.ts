@@ -3,21 +3,26 @@ import {
   BadRequestException,
   ValidationError,
 } from '@nestjs/common';
+import { errorsType } from 'types';
 
 export function ValidationPipeErrorsFormatted() {
   return new ValidationPipe({
     exceptionFactory: (validationErrors: ValidationError[] = []) => {
-      const result: any = {};
+      const fieldErrors: errorsType = {};
 
       validationErrors.forEach((item: any) => {
         const arrayOfErrors = Object.keys(item.constraints).map(
           (key) => item.constraints[key],
         );
 
-        result[item.property + 'Errors'] = arrayOfErrors;
+        fieldErrors[item.property] = arrayOfErrors;
       });
 
-      return new BadRequestException([result]);
+      return new BadRequestException({
+        statusCode: 400,
+        fieldErrors,
+        error: 'Bad Request',
+      });
     },
     whitelist: true,
   });

@@ -1,7 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import { User } from '@prisma/client';
-import { CurrentUser } from 'auth/current-user.decorator';
-import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
+import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
 
 @Controller()
@@ -9,8 +6,7 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
-  @UseGuards(JwtAuthGuard)
-  getHello(@CurrentUser() user: User): string {
+  getHello(): string {
     return this.appService.getHello();
   }
 }

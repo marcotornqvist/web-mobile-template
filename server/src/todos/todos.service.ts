@@ -2,6 +2,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import {
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { Todo } from '@prisma/client';
@@ -28,11 +29,7 @@ export class TodosService {
     });
   }
 
-  async createTodo(
-    userId: string,
-    // authentication: string,
-    { title }: TodoDto,
-  ): Promise<Todo> {
+  async createTodo(userId: string, { title }: TodoDto): Promise<Todo> {
     try {
       const todo = await this.prisma.todo.create({
         data: {
@@ -42,9 +39,9 @@ export class TodosService {
       });
 
       return todo;
-    } catch (error) {
-      console.log(error);
-      throw error;
+    } catch (err) {
+      console.log(err);
+      throw new InternalServerErrorException('Todo could not be created.');
     }
   }
 
@@ -60,15 +57,22 @@ export class TodosService {
       throw new ForbiddenException('Not Authorized.');
     }
 
-    // Updates the title of the todo
-    return this.prisma.todo.update({
-      where: {
-        id,
-      },
-      data: {
-        title,
-      },
-    });
+    try {
+      // Updates the title of the todo
+      const updatedTodo = this.prisma.todo.update({
+        where: {
+          id,
+        },
+        data: {
+          title,
+        },
+      });
+
+      return updatedTodo;
+    } catch (err) {
+      console.log(err);
+      throw new InternalServerErrorException('Todo could not be updated.');
+    }
   }
 
   async toggleIsCompletedTodo(userId: string, id: string): Promise<boolean> {
@@ -79,23 +83,30 @@ export class TodosService {
       throw new ForbiddenException('Not Authorized.');
     }
 
-    // Toggle isCompleted from true to false and vice versa
-    const { isCompleted } = await this.prisma.todo.update({
-      where: {
-        id,
-      },
-      data: {
-        isCompleted: !todo.isCompleted,
-      },
-      select: {
-        isCompleted: true,
-      },
-    });
+    try {
+      // Toggle isCompleted from true to false and vice versa
+      const { isCompleted } = await this.prisma.todo.update({
+        where: {
+          id,
+        },
+        data: {
+          isCompleted: !todo.isCompleted,
+        },
+        select: {
+          isCompleted: true,
+        },
+      });
 
-    return isCompleted;
+      return isCompleted;
+    } catch (err) {
+      console.log(err);
+      throw new InternalServerErrorException(
+        'Todo completed state could not be toggled.',
+      );
+    }
   }
 
-  async deleteTodo(userId: string, id: string): Promise<boolean> {
+  async deleteTodo(userId: string, id: string) {
     // Check that todo exists
     const todo = await this.getTodoById(id);
 
@@ -103,14 +114,19 @@ export class TodosService {
       throw new ForbiddenException('Not Authorized.');
     }
 
-    // Delete todo
-    await this.prisma.todo.delete({
-      where: {
-        id,
-      },
-    });
+    try {
+      // Delete todo
+      await this.prisma.todo.delete({
+        where: {
+          id,
+        },
+      });
 
-    return true;
+      return true;
+    } catch (err) {
+      console.log(err);
+      throw new InternalServerErrorException('Todo could not be deleted.');
+    }
   }
 
   private async getTodoById(id: string): Promise<Todo> {

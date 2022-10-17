@@ -1,43 +1,46 @@
-import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Req, Res } from '@nestjs/common';
+import { ApiCreatedResponse, ApiHeader, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Response, Request } from 'express';
+import { SwaggerHeaderAuthMessage } from 'utils/swaggerMessages';
 import { AuthService } from './auth.service';
-// import { CurrentUser } from './current-user.decorator';
-import { User } from '@prisma/client';
 import { LoginUserDto } from './dto/login-user.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
-// import { LocalAuthGuard } from './guards/local-auth.guard';
-
-/*
-TODO:
-Backend: User signs in -> Returns idToken + expiration time and sets userId + refreshToken in cookies.
-Frontend: idToken is set in react globalState -> refresh accessToken with passed onto backend with headers
--> create private routes for routes when not authenticated
-*/
 
 @Controller('auth')
+@ApiTags('Auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  async register(@Body() body: RegisterUserDto) {
-    return await this.authService.register(body);
+  @ApiCreatedResponse({ type: String })
+  async register(
+    @Body() body: RegisterUserDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<string> {
+    return await this.authService.register(body, response);
   }
 
   @Post('login')
+  @ApiOkResponse({ type: String })
   async login(
     @Body() body: LoginUserDto,
     @Res({ passthrough: true }) response: Response,
-  ) {
+  ): Promise<string> {
     return await this.authService.login(body, response);
   }
 
-  @Post('refresh')
-  async refresh(@Req() request: Request) {
-    return await this.authService.refresh(request);
+  @Post('refreshSession')
+  @ApiOkResponse({ type: String })
+  async refreshSession(@Req() request: Request): Promise<string> {
+    const refreshToken: string = request.cookies?.refreshToken;
+    const userId: string = request.cookies?.userId;
+
+    return await this.authService.refreshSession(refreshToken, userId);
   }
 
   @Post('logout')
-  logout(@Res({ passthrough: true }) response: Response) {
+  @ApiOkResponse({ type: Boolean })
+  logout(@Res({ passthrough: true }) response: Response): boolean {
     return this.authService.logout(response);
   }
 }

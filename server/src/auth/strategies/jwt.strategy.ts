@@ -4,7 +4,6 @@ import { ConfigService } from '@nestjs/config';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from 'users/users.service';
 import { passportJwtSecret } from 'jwks-rsa';
-import { Request } from '@nestjs/common';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -14,7 +13,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        ExtractJwt.fromHeader('idtoken'),
+        ExtractJwt.fromHeader('authorization'),
       ]),
 
       secretOrKeyProvider: passportJwtSecret({
