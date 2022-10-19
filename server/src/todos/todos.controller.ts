@@ -67,8 +67,8 @@ export class TodosController {
   @ApiHeader(SwaggerHeaderAuthMessage)
   @ApiOkResponse({ type: Boolean })
   toggleIsCompletedTodo(
-    @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<boolean> {
     return this.todosService.toggleIsCompletedTodo(user.id, id);
   }

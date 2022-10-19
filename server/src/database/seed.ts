@@ -1,54 +1,47 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, User, UserRole } from '@prisma/client';
+import { faker } from '@faker-js/faker';
 
 // initialize Prisma Client
 const prisma = new PrismaClient();
 
 async function main() {
-  // create dummy users
-  const user1 = await prisma.user.upsert({
-    where: { email: 'john@gmail.com' },
-    update: {},
-    create: {
-      id: '74783f1d-22a1-4cb8-bb80-dff508883a23',
-      name: 'John Doe',
-      email: 'john@gmail.com',
-      userRole: 'ADMIN',
-    },
-  });
+  Array.from({ length: 5 }).forEach(async () => {
+    const user = await prisma.user.create({
+      data: {
+        id: faker.datatype.uuid(),
+        name: faker.name.fullName(),
+        userRole: UserRole.USER,
+        email: faker.internet.email(),
+        updatedAt: faker.date.past(),
+        createdAt: faker.date.past(),
+      },
+    });
 
-  const user2 = await prisma.user.upsert({
-    where: { email: 'jane@gmail.com' },
-    update: {},
-    create: {
-      id: 'f3e6fd06-98d0-4fb8-91ee-2141806d038b',
-      name: 'Jane Doe',
-      email: 'jane@gmail.com',
-    },
-  });
+    console.log(user);
 
-  // create dummy todos
-  const todos = await prisma.todo.createMany({
-    data: [
-      {
-        title: 'Buy a train ticket.',
-        userId: 'f3e6fd06-98d0-4fb8-91ee-2141806d038b',
-      },
-      {
-        title: 'Go buy groceries.',
-        userId: '74783f1d-22a1-4cb8-bb80-dff508883a23',
-      },
-      {
-        title: 'Go to gym.',
-        userId: '74783f1d-22a1-4cb8-bb80-dff508883a23',
-      },
-      {
-        title: 'Drink coffee.',
-        userId: '74783f1d-22a1-4cb8-bb80-dff508883a23',
-      },
-    ],
-  });
+    const todos = await prisma.todo.createMany({
+      data: [
+        {
+          title: 'Buy a train ticket.',
+          userId: user.id,
+        },
+        {
+          title: 'Go buy groceries.',
+          userId: user.id,
+        },
+        {
+          title: 'Go to gym.',
+          userId: user.id,
+        },
+        {
+          title: 'Drink coffee.',
+          userId: user.id,
+        },
+      ],
+    });
 
-  console.log({ user1, user2 }, { todos });
+    console.log(todos);
+  });
 }
 
 // execute the main function

@@ -1,5 +1,6 @@
 import { PrismaService } from 'prisma/prisma.service';
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
@@ -12,10 +13,12 @@ import { TodoDto } from './dto/todo.dto';
 export class TodosService {
   constructor(private prisma: PrismaService) {}
 
-  getAllTodos(): Promise<Todo[]> {
-    return this.prisma.todo.findMany({
+  async getAllTodos(): Promise<Todo[]> {
+    const todos = await this.prisma.todo.findMany({
       orderBy: { createdAt: 'desc' },
     });
+
+    return todos;
   }
 
   getAllTodosByMe(userId: string): Promise<Todo[]> {
@@ -129,7 +132,7 @@ export class TodosService {
     }
   }
 
-  private async getTodoById(id: string): Promise<Todo> {
+  async getTodoById(id: string): Promise<Todo> {
     // Find todo by id
     const todo = await this.prisma.todo.findUnique({
       where: {
