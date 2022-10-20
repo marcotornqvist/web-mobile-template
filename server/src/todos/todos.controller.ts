@@ -28,6 +28,8 @@ import { SwaggerHeaderAuthMessage } from 'utils/swaggerMessages';
 export class TodosController {
   constructor(private readonly todosService: TodosService) {}
 
+  // @UseInterceptors(CacheInterceptor)
+  // @CacheKey('')
   @Get()
   @ApiOkResponse({ type: TodoEntity, isArray: true })
   getAllTodos(): Promise<Todo[]> {

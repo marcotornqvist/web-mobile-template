@@ -1,4 +1,4 @@
-import { PrismaClient, User, UserRole } from '@prisma/client';
+import { PrismaClient, UserRole } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 
 // initialize Prisma Client

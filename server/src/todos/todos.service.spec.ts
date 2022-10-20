@@ -1,4 +1,8 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  CACHE_MANAGER,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Todo } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -13,6 +17,13 @@ const mockTodo: Todo = {
   updatedAt: new Date('2022-10-10T08:05:01.731Z'),
 };
 
+const mockCacheManager = {
+  set: jest.fn(),
+  get: jest.fn(),
+  del: jest.fn(),
+  reset: jest.fn(),
+};
+
 describe('TodoService', () => {
   let todosService: TodosService;
   let prismaService: PrismaService;
@@ -20,7 +31,6 @@ describe('TodoService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        TodosService,
         {
           provide: PrismaService,
           useValue: {
@@ -33,6 +43,11 @@ describe('TodoService', () => {
             },
           },
         },
+        {
+          provide: CACHE_MANAGER,
+          useValue: mockCacheManager,
+        },
+        TodosService,
       ],
     }).compile();
 
@@ -180,9 +195,6 @@ describe('TodoService', () => {
         },
         data: {
           isCompleted: !isCompleted,
-        },
-        select: {
-          isCompleted: true,
         },
       });
     });

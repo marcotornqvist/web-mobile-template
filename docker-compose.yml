@@ -36,6 +36,12 @@ services:
       - 6379:6379
     volumes:
       - redis:/data
+#   redis:
+#     image: "redislabs/rejson:2.0.0"
+#     ports:
+#       - "6379:6379"
+#     volumes:
+#       - "redisdata:/data"
   postgres:
     container_name: postgres
     image: postgres
@@ -57,12 +63,6 @@ services:
     depends_on:
       - postgres
       - server
-#   redis:
-#     image: "redislabs/rejson:2.0.0"
-#     ports:
-#       - "6379:6379"
-#     volumes:
-#       - "redisdata:/data"
 volumes:
   docker-nest-postgres:
   redis:

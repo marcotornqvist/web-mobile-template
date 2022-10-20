@@ -18,6 +18,7 @@ import * as redisStore from 'cache-manager-redis-store';
       store: redisStore,
       host: process.env.REDIS_HOST,
       port: process.env.REDIS_PORT,
+      ttl: 60,
     }),
     PrismaModule,
     TodosModule,
@@ -25,6 +26,13 @@ import * as redisStore from 'cache-manager-redis-store';
     UsersModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // to set automatic caching for all get requests.
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: CacheInterceptor,
+    // },
+  ],
 })
 export class AppModule {}

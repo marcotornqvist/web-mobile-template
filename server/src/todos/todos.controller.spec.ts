@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Todo, User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -27,6 +23,13 @@ const mockUser: User = {
   updatedAt: new Date('2022-10-17T15:31:50.629Z'),
 };
 
+const mockCacheManager = {
+  set: jest.fn(),
+  get: jest.fn(),
+  del: jest.fn(),
+  reset: jest.fn(),
+};
+
 describe('TodoService', () => {
   let todosController: TodosController;
   let todosService: TodosService;
@@ -45,6 +48,10 @@ describe('TodoService', () => {
             toggleIsCompletedTodo: jest.fn().mockReturnValue(true),
             deleteTodo: jest.fn().mockReturnValue(true),
           },
+        },
+        {
+          provide: CACHE_MANAGER,
+          useValue: mockCacheManager,
         },
         PrismaService,
       ],
