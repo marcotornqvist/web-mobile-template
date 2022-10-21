@@ -1,7 +1,7 @@
 import { CACHE_MANAGER } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Todo, User } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from 'prisma/prisma.service';
 import { TodosController } from './todos.controller';
 import { TodosService } from './todos.service';
 

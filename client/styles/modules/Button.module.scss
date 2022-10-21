@@ -1,0 +1,15 @@
+@use '../abstracts/colors' as *;
+@use '../abstracts/shadows' as *;
+@use '../abstracts/breakpoints' as *;
+@use '../abstracts/border-radius' as *;
+
+.button {
+  :global {
+    width: 150px;
+    height: 3rem;
+    border-radius: 6px;
+    background: $blue;
+    border: none;
+    color: white;
+  }
+}

@@ -61,7 +61,7 @@ export class TodosService {
       });
 
       if (cachedTodos) {
-        const todos = [...cachedTodos, todo];
+        const todos = [todo, ...cachedTodos];
 
         await this.cacheService.set<Todo[]>(cacheKey, todos, {
           ttl,
