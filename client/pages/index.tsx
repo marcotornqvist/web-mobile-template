@@ -1,15 +1,18 @@
 import type { NextPage } from "next";
 import Form from "components/todo/Form";
 import Todos from "components/todo/Todos";
+import TodoProvider from "context/todoContext";
 
 const Home: NextPage = () => {
   return (
-    <main className="landing">
-      <div className="container">
-        <Form />
-        <Todos />
-      </div>
-    </main>
+    <TodoProvider>
+      <main className="landing">
+        <div className="container">
+          <Form />
+          <Todos />
+        </div>
+      </main>
+    </TodoProvider>
   );
 };
 

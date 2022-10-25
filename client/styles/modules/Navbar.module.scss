@@ -1,7 +1,7 @@
-@use '../abstracts/colors' as *;
-@use '../abstracts/shadows' as *;
-@use '../abstracts/breakpoints' as *;
-@use '../abstracts/border-radius' as *;
+@use "../abstracts/colors" as *;
+@use "../abstracts/shadows" as *;
+@use "../abstracts/breakpoints" as *;
+@use "../abstracts/border-radius" as *;
 
 .navbar {
   :global {
@@ -23,7 +23,7 @@
 
     ul {
       display: flex;
-      padding: 0 1rem;
+      padding: 0 0 0 1rem;
 
       li {
         a {
@@ -32,8 +32,7 @@
       }
 
       li.home-link,
-      li.login-link,
-      li.register-link {
+      li.login-link {
         margin-right: 1.5rem;
       }
     }

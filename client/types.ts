@@ -1,6 +1,6 @@
 export enum UserRole {
-  ADMIN = 'ADMIN',
-  USER = 'USER',
+  ADMIN = "ADMIN",
+  USER = "USER",
 }
 
 export type User = {
@@ -11,6 +11,22 @@ export type User = {
   createdAt: Date;
   updatedAt: Date | null;
 };
+
+export interface AuthToken {
+  authorization?: string;
+  expiration?: number;
+}
+
+export interface AuthResponse {
+  user: User;
+  authorization: string;
+  expiration: number;
+}
+
+export interface AuthContextType extends AuthToken {
+  isAuth: boolean;
+  setAuthToken: (authToken: AuthToken | null) => void;
+}
 
 export interface Todo {
   id: string;
@@ -35,12 +51,12 @@ export interface TodoContextType {
   updateTodo: (todo: Todo | null) => void;
 }
 
-export interface updateTodoVariables {
+export interface UpdateTodoVariables {
   id: string;
   title: string;
 }
 
-export interface loginVariables {
+export interface LoginVariables {
   email: string;
   password: string;
 }

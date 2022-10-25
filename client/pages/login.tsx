@@ -5,7 +5,7 @@ import inputStyles from "styles/modules/Input.module.scss";
 
 const Login: FC = () => {
   const [email, setEmail] = useState("sam@gmail.com");
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState("test123");
   const { mutate } = useLogin();
 
   const handleSubmit = async (e: SyntheticEvent) => {
@@ -31,7 +31,7 @@ const Login: FC = () => {
           </div>
           <div className={inputStyles.inputGroup}>
             <div className="top-message">
-              <label>Email</label>
+              <label>Password</label>
             </div>
             <div className="input-container">
               <input

@@ -4,9 +4,12 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipeErrorsFormatted } from 'utils';
 
 async function bootstrap() {
+  const isDev = process.env.CURRENT_ENVIRONMENT === 'dev';
+
   const app = await NestFactory.create(AppModule, {
     cors: {
       credentials: true,
+      // origin: isDev ? 'http://localhost:3000' : '',
       origin: 'http://localhost:3000',
     },
   });
@@ -17,7 +20,6 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  const isDev = process.env.CURRENT_ENVIRONMENT === 'dev';
   isDev && SwaggerModule.setup('api', app, document);
   app.useGlobalPipes(ValidationPipeErrorsFormatted());
 

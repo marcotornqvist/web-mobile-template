@@ -1,19 +1,20 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Todo, TodoContextType, updateTodoVariables } from "types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Todo, TodoContextType, UpdateTodoVariables } from "types";
 import { useContext } from "react";
 import { TodoContext } from "context/todoContext";
 import axios from "axios";
 
 // Get all todos
-export const getAllTodosByMe = async (): Promise<Todo[]> => {
-  const result = await axios.get(
-    `${process.env.NEXT_PUBLIC_BASE_URL}todos/me`,
-    {
+export const useGetAllTodosByMe = () => {
+  const getTodos = async () => {
+    const { data } = await axios.get("todos/me", {
       withCredentials: true,
-    },
-  );
+    });
 
-  return result.data;
+    return data;
+  };
+
+  return useQuery(["todos"], getTodos, {});
 };
 
 // Create a new todo
@@ -22,12 +23,7 @@ export const useCreateTodo = () => {
   const queryClient = useQueryClient();
 
   return useMutation(
-    (title) =>
-      axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}todos`,
-        { title },
-        { withCredentials: true },
-      ),
+    (title) => axios.post("todos", { title }, { withCredentials: true }),
     {
       onMutate: async (title: string) => {
         setTitle("");
@@ -59,11 +55,11 @@ export const useCreateTodo = () => {
       },
       onError: (error, variables, context) => {
         // Remove optimistic todo from the todos list
-        queryClient.setQueryData(["todos"], (previous: any) => {
-          return previous.filter(
+        queryClient.setQueryData(["todos"], (previous: any) =>
+          previous.filter(
             (todo: any) => todo.id !== context?.optimisticTodo.id,
-          );
-        });
+          ),
+        );
       },
     },
   );
@@ -75,14 +71,10 @@ export const useUpdateTodo = () => {
   const queryClient = useQueryClient();
 
   return useMutation(
-    ({ title, id }: updateTodoVariables) =>
-      axios.patch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}todos/${id}`,
-        { title },
-        { withCredentials: true },
-      ),
+    ({ title, id }: UpdateTodoVariables) =>
+      axios.patch(`todos/${id}`, { title }, { withCredentials: true }),
     {
-      onMutate: async ({ title, id }: updateTodoVariables) => {
+      onMutate: async ({ title, id }: UpdateTodoVariables) => {
         setTitle("");
         // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
         await queryClient.cancelQueries(["todos"]);
@@ -111,7 +103,7 @@ export const useDeleteTodo = () => {
 
   return useMutation(
     (id) =>
-      axios.delete(`${process.env.NEXT_PUBLIC_BASE_URL}todos/${id}`, {
+      axios.delete(`todos/${id}`, {
         withCredentials: true,
       }),
     {
@@ -142,13 +134,9 @@ export const useToggleIsCompleteTodo = () => {
 
   return useMutation(
     (id) =>
-      axios.patch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}todos/toggleIsCompleted/${id}`,
-        null,
-        {
-          withCredentials: true,
-        },
-      ),
+      axios.patch(`todos/toggleIsCompleted/${id}`, null, {
+        withCredentials: true,
+      }),
     {
       onMutate: async (id: string) => {
         // Cancel any outgoing refetches (so they don't overwrite our optimistic update)

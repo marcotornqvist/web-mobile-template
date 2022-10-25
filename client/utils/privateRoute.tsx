@@ -1,32 +1,49 @@
-export {};
-// import { ReactNode, useEffect } from 'react';
-// import { useSnapshot } from 'valtio';
-// import { authState } from 'store';
-// import { useRouter } from 'next/router';
+// export {};
+import { ReactNode, useEffect } from "react";
+import { useRouter } from "next/router";
+import { useQueryClient } from "@tanstack/react-query";
+import { AuthToken } from "types";
 
-// interface IProps {
-//   protectedRoutes: string[];
-//   children: any;
-// }
+interface IProps {
+  hasLoaded: boolean;
+  children: any;
+}
 
-// export default function PrivateRoute({ protectedRoutes, children }: IProps) {
-//   const { loading, isAuth } = useSnapshot(authState);
-//   const router = useRouter();
+export default function PrivateRoute({ hasLoaded, children }: IProps) {
+  const queryClient = useQueryClient();
+  const authorization = queryClient.getQueryData<AuthToken>([
+    "authToken",
+  ])?.authorization;
 
-//   const firstPath = router.pathname.split('/')[1];
+  const router = useRouter();
 
-//   const pathIsProtected = protectedRoutes.indexOf('/' + firstPath) !== -1;
+  // These routes are only accessible when not authenticated (guest)
+  const guestRoutes = ["/register", "/login"];
 
-//   useEffect(() => {
-//     if (!loading && !isAuth && pathIsProtected) {
-//       // Redirect route, you can point this to /login
-//       router.push('/');
-//     }
-//   }, [loading, isAuth, pathIsProtected]);
+  // These routes are only accessible when authenticated
+  const authRoutes = ["/"];
 
-//   if ((loading || !isAuth) && pathIsProtected) {
-//     return null;
-//   }
+  const firstPath = router.pathname.split("/")[1];
+  const guestIsProtected = guestRoutes.indexOf("/" + firstPath) !== -1;
+  const authIsProtected = authRoutes.indexOf("/" + firstPath) !== -1;
 
-//   return children;
-// }
+  useEffect(() => {
+    if (hasLoaded && !authorization && authIsProtected) {
+      router.push("/login");
+    }
+
+    if (hasLoaded && authorization && guestIsProtected) {
+      router.push("/");
+    }
+  }, [hasLoaded, authorization, authIsProtected, guestIsProtected]);
+
+  if (hasLoaded && !authorization && authIsProtected) {
+    return null;
+  }
+
+  if (hasLoaded && authorization && guestIsProtected) {
+    return null;
+  }
+
+  return children;
+}

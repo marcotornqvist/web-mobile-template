@@ -1,46 +1,95 @@
-import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/router";
-import { FC } from "react";
-import { useLogout } from "operations/auth";
-import { User } from "types";
+import { FC, useEffect, useState } from "react";
+import { useSetAuthToken, useLogout } from "operations/auth";
+import { useGetMe } from "operations/user";
+import { AuthToken } from "types";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import styles from "styles/modules/Navbar.module.scss";
-import { fetcher, refreshTokens } from "utils/fetcher";
-import axios from "axios";
+import initializeAxios from "utils/axiosConfig";
+import useInterval from "hooks/useInterval";
 
-const Navbar: FC = () => {
-  const { asPath } = useRouter();
+const GuestLayout: FC<{ asPath: string }> = ({ asPath }) => {
+  return (
+    <>
+      <div></div>
+      <ul>
+        <li className={`login-link${asPath === "/login" ? " selected" : ""}`}>
+          <Link href="/login">
+            <a>Login</a>
+          </Link>
+        </li>
+        <li
+          className={`register-link${
+            asPath === "/register" ? " selected" : ""
+          }`}
+        >
+          <Link href="/register">
+            <a>Register</a>
+          </Link>
+        </li>
+      </ul>
+    </>
+  );
+};
+
+const AuthLayout: FC<{ asPath: string }> = ({ asPath }) => {
   const { mutate } = useLogout();
-  const { data, isLoading, error } = useQuery<User>(["me"]);
+  const { data } = useGetMe();
+
+  return (
+    <>
+      <h3>{data?.name}</h3>
+      <ul>
+        <li className={`home-link${asPath === "/" ? " selected" : ""}`}>
+          <Link href="/">
+            <a>Home</a>
+          </Link>
+        </li>
+        <li className={`logout-link`} onClick={() => mutate()}>
+          <a>Logout</a>
+        </li>
+      </ul>
+    </>
+  );
+};
+
+interface IProps {
+  hasLoaded: boolean;
+  setHasLoaded: (hasLoaded: boolean) => void;
+}
+
+const Navbar: FC<IProps> = ({ hasLoaded, setHasLoaded }) => {
+  const { asPath } = useRouter();
+  const { mutate, isSuccess, isError } = useSetAuthToken();
+  const queryClient = useQueryClient();
+  const authToken = queryClient.getQueryData<AuthToken>(["authToken"]);
+  initializeAxios(authToken?.authorization);
+
+  useEffect(() => {
+    mutate();
+  }, []);
+
+  useInterval(() => {
+    mutate();
+  }, authToken?.expiration ?? 3600000); // default value is 1h or 3600000ms for idToken in cognito.
+
+  useEffect(() => {
+    (isSuccess || isError) && setHasLoaded(true);
+  }, [isSuccess, isError, setHasLoaded]);
 
   return (
     <div className={styles.navbar}>
       <div className="container">
-        <h3>{data?.id}</h3>
-        <ul>
-          <li className={`home-link${asPath === "/" ? " selected" : ""}`}>
-            <Link href="/">
-              <a>Home</a>
-            </Link>
-          </li>
-          <li className={`login-link${asPath === "/login" ? " selected" : ""}`}>
-            <Link href="/login">
-              <a>Login</a>
-            </Link>
-          </li>
-          <li
-            className={`register-link${
-              asPath === "/register" ? " selected" : ""
-            }`}
-          >
-            <Link href="/register">
-              <a>Register</a>
-            </Link>
-          </li>
-          <li className={`logout-link`} onClick={() => mutate()}>
-            <a>Logout</a>
-          </li>
-        </ul>
+        {hasLoaded && (
+          <>
+            {authToken?.authorization ? (
+              <AuthLayout asPath={asPath} />
+            ) : (
+              <GuestLayout asPath={asPath} />
+            )}
+          </>
+        )}
       </div>
     </div>
   );

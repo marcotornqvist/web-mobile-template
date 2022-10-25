@@ -3,7 +3,7 @@ const path = require("path");
 
 const nextConfig = {
   output: "standalone",
-  reactStrictMode: true,
+  reactStrictMode: false,
   swcMinify: true,
   sassOptions: {
     includePaths: [path.join(__dirname, "styles")],

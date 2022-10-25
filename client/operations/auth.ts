@@ -1,10 +1,37 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import axios from "axios";
 import { useRouter } from "next/router";
-import { title } from "process";
-import { useContext } from "react";
-import { TodoContext } from "context/todoContext";
-import { loginVariables, Todo, TodoContextType } from "types";
+import { LoginVariables, RegisterVariables } from "types";
+import axios from "axios";
+
+// Register user
+export const useRegister = () => {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  return useMutation(
+    ({ name, email, password, confirmPassword }: RegisterVariables) =>
+      axios.post(
+        "auth/register",
+        { name, email, password, confirmPassword },
+        { withCredentials: true },
+      ),
+    {
+      onSuccess: (result) => {
+        queryClient.clear();
+
+        const time = Math.floor(Date.now() / 1000);
+        const expiration = (result.data.expiration - time) * 1000 - 100000;
+        queryClient.setQueryData(["authToken"], {
+          authorization: result.data.authorization,
+          expiration,
+        });
+
+        queryClient.setQueryData(["me"], result.data.user);
+        router.push("/");
+      },
+    },
+  );
+};
 
 // Login user
 export const useLogin = () => {
@@ -12,27 +39,43 @@ export const useLogin = () => {
   const router = useRouter();
 
   return useMutation(
-    ({ email, password }: loginVariables) =>
-      axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}auth/login`,
-        { email, password },
-        { withCredentials: true },
-      ),
+    ({ email, password }: LoginVariables) =>
+      axios.post("auth/login", { email, password }, { withCredentials: true }),
     {
-      onSuccess: (result, variables, context) => {
+      onSuccess: (result) => {
         queryClient.clear();
-        queryClient.setQueryData(["me"], () => {
-          return result.data?.user;
+
+        const time = Math.floor(Date.now() / 1000);
+        const expiration = (result.data.expiration - time) * 1000 - 100000;
+        queryClient.setQueryData(["authToken"], {
+          authorization: result.data.authorization,
+          expiration,
         });
+
+        queryClient.setQueryData(["me"], result.data.user);
         router.push("/");
       },
-      onError: (error, variables, context) => {
-        // Remove optimistic todo from the todos list
-        // queryClient.setQueryData(['todos'], (previous: any) => {
-        //   return previous.filter(
-        //     (todo: any) => todo.id !== context?.optimisticTodo.id,
-        //   );
-        // });
+    },
+  );
+};
+
+export const useSetAuthToken = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    () =>
+      axios.post("auth/refreshSession", null, {
+        withCredentials: true,
+      }),
+    {
+      onSuccess: (result) => {
+        const time = Math.floor(Date.now() / 1000);
+        const expiration = (result.data.expiration - time) * 1000 - 100000;
+
+        queryClient.setQueryData(["authToken"], {
+          authorization: result.data.authorization,
+          expiration,
+        });
       },
     },
   );
@@ -40,20 +83,19 @@ export const useLogin = () => {
 
 // Logout user
 export const useLogout = () => {
-  const queryClient = useQueryClient();
   const router = useRouter();
+  const queryClient = useQueryClient();
+
   return useMutation(
     () =>
-      axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}auth/logout`, null, {
+      axios.post("auth/logout", null, {
         withCredentials: true,
       }),
     {
-      onMutate: async () => {},
-      onSuccess: (result, variables, context) => {
+      onSuccess: () => {
         queryClient.clear();
         router.push("/login");
       },
-      onError: (error, variables, context) => {},
     },
   );
 };

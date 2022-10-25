@@ -21,6 +21,7 @@ import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { PrismaService } from 'prisma/prisma.service';
 import { UsersService } from 'users/users.service';
+import { AuthResponse, AuthToken } from 'types';
 
 @Injectable()
 export class AuthService {
@@ -40,7 +41,7 @@ export class AuthService {
   async register(
     @Body() { name, email, password, confirmPassword }: RegisterUserDto,
     response: Response,
-  ): Promise<string> {
+  ): Promise<AuthResponse> {
     await this.usersService.validateEmail(email);
     await this.usersService.validatePassword(password, confirmPassword);
 
@@ -82,13 +83,14 @@ export class AuthService {
     });
 
     const login = await this.login({ email, password }, response);
+
     return login;
   }
 
   async login(
     @Body() { email, password }: LoginUserDto,
     response: Response,
-  ): Promise<string> {
+  ): Promise<AuthResponse> {
     const user = await this.prisma.user.findUnique({
       where: {
         email,
@@ -116,9 +118,13 @@ export class AuthService {
       );
 
       this.setRefreshTokenAndUserId(result, response);
-      const idToken = result.getIdToken().getJwtToken();
+      const idToken = result.getIdToken();
 
-      return idToken;
+      return {
+        user,
+        authorization: idToken.getJwtToken(),
+        expiration: idToken.getExpiration(),
+      };
     } catch (err) {
       console.log(err);
 
@@ -130,7 +136,7 @@ export class AuthService {
     }
   }
 
-  async refreshSession(token: string, username: string): Promise<string> {
+  async refreshSession(token: string, username: string): Promise<AuthToken> {
     const refreshToken = new CognitoRefreshToken({
       RefreshToken: token,
     });
@@ -141,7 +147,7 @@ export class AuthService {
     });
 
     try {
-      const refreshSession: string = await new Promise((resolve, reject) => {
+      const refreshSession: AuthToken = await new Promise((resolve, reject) => {
         cognitoUser.refreshSession(
           refreshToken,
           (err, result: CognitoUserSession) => {
@@ -149,8 +155,12 @@ export class AuthService {
               reject(err);
             }
 
-            const idToken = result.getIdToken().getJwtToken();
-            resolve(idToken);
+            const idToken = result.getIdToken();
+
+            resolve({
+              authorization: idToken.getJwtToken(),
+              expiration: idToken.getExpiration(),
+            });
           },
         );
       });
@@ -196,13 +206,13 @@ export class AuthService {
     // Expiry date is in 30 days, which is the default expiry date for refreshToken in AWS Cognito.
     const date = new Date();
     const expires = new Date(date.setDate(date.getDate() + 30));
-    // const isProduction = process.env.NODE_ENV === 'production';
+    const isProduction = process.env.NODE_ENV === 'production';
 
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       path: '/',
       expires,
-      // sameSite: isProduction ? 'none' : false,
+      sameSite: isProduction ? 'none' : false,
       // secure: isProduction,
     });
 
@@ -210,7 +220,7 @@ export class AuthService {
       httpOnly: true,
       path: '/',
       expires,
-      // sameSite: isProduction ? 'none' : false,
+      sameSite: isProduction ? 'none' : false,
       // secure: isProduction,
     });
   }
@@ -225,7 +235,6 @@ export class AuthService {
       httpOnly: true,
       expires: new Date(),
     });
-
     // https://stackoverflow.com/questions/57791209/res-clearcookie-function-doesnt-delete-cookies
     // res.clearCookie('my_cookie', { domain: COOKIE_DOMAIN, path: COOKIE_PATH });
   }
