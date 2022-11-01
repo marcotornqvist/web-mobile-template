@@ -1,6 +1,6 @@
 import { User } from '@prisma/client';
 
-export type errorsType = { [key: string]: string[] };
+export type errorsType = { [key: string]: string };
 
 export interface AuthToken {
   authorization: string;

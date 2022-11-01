@@ -2,6 +2,7 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { LoginVariables, RegisterVariables } from "types";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 // Register user
 export const useRegister = () => {
@@ -29,6 +30,13 @@ export const useRegister = () => {
         queryClient.setQueryData(["me"], result.data.user);
         router.push("/");
       },
+      onError: (error: any) => {
+        if (error?.response?.data?.formErrors) {
+          error.formErrors = error.response.data.formErrors;
+        } else {
+          toast.error(error?.response?.data?.message);
+        }
+      },
     },
   );
 };
@@ -54,6 +62,15 @@ export const useLogin = () => {
 
         queryClient.setQueryData(["me"], result.data.user);
         router.push("/");
+      },
+      onError: (error: any) => {
+        const errors = error?.response?.data;
+
+        toast.error(
+          errors?.message ||
+            errors?.formErrors?.email ||
+            errors?.formErrors?.password,
+        );
       },
     },
   );
@@ -95,6 +112,13 @@ export const useLogout = () => {
       onSuccess: () => {
         queryClient.clear();
         router.push("/login");
+      },
+      onError: (error: any) => {
+        if (error?.response?.data?.formErrors) {
+          error.formErrors = error?.response?.data?.formErrors;
+        } else {
+          toast.error(error?.response?.data?.message);
+        }
       },
     },
   );

@@ -5,10 +5,10 @@ import inputStyles from "styles/modules/Input.module.scss";
 
 const Register: FC = () => {
   const [name, setName] = useState("John Doe");
-  const [email, setEmail] = useState("john2@gmail.com");
+  const [email, setEmail] = useState("john@gmail.com");
   const [password, setPassword] = useState("test123");
   const [confirmPassword, setConfirmPassword] = useState("test123");
-  const { mutate } = useRegister();
+  const { mutate, error } = useRegister();
 
   const handleSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
@@ -22,6 +22,7 @@ const Register: FC = () => {
           <div className={inputStyles.inputGroup}>
             <div className="top-message">
               <label>Name</label>
+              <span>{error?.formErrors?.name}</span>
             </div>
             <div className="input-container">
               <input
@@ -34,6 +35,7 @@ const Register: FC = () => {
           <div className={inputStyles.inputGroup}>
             <div className="top-message">
               <label>Email</label>
+              <span>{error?.formErrors?.email}</span>
             </div>
             <div className="input-container">
               <input
@@ -46,6 +48,7 @@ const Register: FC = () => {
           <div className={inputStyles.inputGroup}>
             <div className="top-message">
               <label>Password</label>
+              <span>{error?.formErrors?.password}</span>
             </div>
             <div className="input-container">
               <input
@@ -58,6 +61,7 @@ const Register: FC = () => {
           <div className={inputStyles.inputGroup}>
             <div className="top-message">
               <label>Confirm Password</label>
+              <span>{error?.formErrors?.confirmPassword}</span>
             </div>
             <div className="input-container">
               <input

@@ -39,12 +39,12 @@ export class AuthController {
 
   @Post('refreshSession')
   @ApiOkResponse({ type: AuthTokenEntity })
-  async refreshSession(@Req() request: Request): Promise<AuthToken> {
-    const refreshToken: string = request.cookies?.refreshToken;
-    const userId: string = request.cookies?.userId;
+  async refreshSession(@Req() request: Request): Promise<AuthToken | void> {
+    const refreshToken: string = await request.cookies?.refreshToken;
+    const userId: string = await request.cookies?.userId;
 
     if (!refreshToken || !userId) {
-      throw new ForbiddenException('Not Authorized.');
+      return;
     }
 
     return await this.authService.refreshSession(refreshToken, userId);

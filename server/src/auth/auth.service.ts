@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   forwardRef,
   Inject,
@@ -21,7 +22,7 @@ import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { PrismaService } from 'prisma/prisma.service';
 import { UsersService } from 'users/users.service';
-import { AuthResponse, AuthToken } from 'types';
+import { AuthResponse, AuthToken, errorsType } from 'types';
 
 @Injectable()
 export class AuthService {
@@ -42,8 +43,33 @@ export class AuthService {
     @Body() { name, email, password, confirmPassword }: RegisterUserDto,
     response: Response,
   ): Promise<AuthResponse> {
-    await this.usersService.validateEmail(email);
-    await this.usersService.validatePassword(password, confirmPassword);
+    const formErrors: errorsType = {};
+
+    // Checks that email doesn't exist
+    const emailHasErrors = await this.usersService.validateEmail(email);
+
+    if (emailHasErrors) {
+      formErrors.email = emailHasErrors;
+    }
+
+    // Check if password matches confirmPassword.
+    const validatePassword = await this.usersService.validatePassword(
+      password,
+      confirmPassword,
+    );
+
+    if (!validatePassword) {
+      formErrors.confirmPassword = "Confirm password doesn't match password";
+    }
+
+    // Throw formErrors if not empty
+    if (Object.keys(formErrors).length > 0) {
+      throw new BadRequestException({
+        statusCode: 400,
+        formErrors,
+        error: 'Bad Request',
+      });
+    }
 
     // Rollbacks to previous state if errors are returned.
     // If user is succesfully created in Prisma but not in Cognito,
@@ -129,7 +155,9 @@ export class AuthService {
       console.log(err);
 
       if (err.code === 'NotAuthorizedException') {
-        throw new UnauthorizedException('Not Authorized.');
+        throw new UnauthorizedException(
+          'The email or password you entered is incorrect.',
+        );
       }
 
       throw new InternalServerErrorException('Password could not be updated.');
@@ -168,7 +196,7 @@ export class AuthService {
       return refreshSession;
     } catch (err) {
       console.log(err);
-      throw new InternalServerErrorException('Password could not be updated.');
+      throw new InternalServerErrorException('Something went wrong.');
     }
   }
 

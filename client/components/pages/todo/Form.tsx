@@ -11,36 +11,28 @@ const Form: FC = () => {
   const { title, setTitle, currentTodo, updateTodo } = useContext(
     TodoContext,
   ) as TodoContextType;
-  const [error, setError] = useState("");
-  const updateTodoMutation = useUpdateTodo();
-  const createTodoMutation = useCreateTodo();
+  const { mutate, error } = useCreateTodo();
+  const { mutate: updateTodoMutate, error: updateTodoError } = useUpdateTodo();
 
   const handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
-    setError("");
 
-    if (title.length > 0) {
-      if (currentTodo) {
-        updateTodoMutation.mutate({ title, id: currentTodo.id });
-        updateTodo(null);
-      } else {
-        createTodoMutation.mutate(title);
-      }
+    if (currentTodo) {
+      updateTodoMutate({ title, id: currentTodo.id });
+      updateTodo(null);
     } else {
-      setError("Title is too short.");
+      mutate(title);
     }
   };
-
-  useEffect(() => {
-    setError("");
-  }, [title]);
 
   return (
     <form className="form-container" onSubmit={handleSubmit}>
       <div className={inputStyles.inputGroup}>
         <div className="top-message">
           <label>Todo Name</label>
-          <span>{error}</span>
+          <span>
+            {error?.formErrors?.title || updateTodoError?.formErrors?.title}
+          </span>
         </div>
         <div className="input-container">
           <input

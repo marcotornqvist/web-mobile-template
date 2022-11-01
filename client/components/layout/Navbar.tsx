@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect } from "react";
 import { useSetAuthToken, useLogout } from "operations/auth";
 import { useGetMe } from "operations/user";
 import { AuthToken } from "types";
@@ -37,7 +37,7 @@ const AuthLayout: FC<{ asPath: string }> = ({ asPath }) => {
   const { mutate } = useLogout();
   const { data } = useGetMe();
 
-  return (
+  return data ? (
     <>
       <h3>{data?.name}</h3>
       <ul>
@@ -46,12 +46,17 @@ const AuthLayout: FC<{ asPath: string }> = ({ asPath }) => {
             <a>Home</a>
           </Link>
         </li>
+        <li className={`account-link${asPath === "/" ? " selected" : ""}`}>
+          <Link href="/account">
+            <a>Account</a>
+          </Link>
+        </li>
         <li className={`logout-link`} onClick={() => mutate()}>
           <a>Logout</a>
         </li>
       </ul>
     </>
-  );
+  ) : null;
 };
 
 interface IProps {
@@ -72,7 +77,8 @@ const Navbar: FC<IProps> = ({ hasLoaded, setHasLoaded }) => {
 
   useInterval(() => {
     mutate();
-  }, authToken?.expiration ?? 3600000); // default value is 1h or 3600000ms for idToken in cognito.
+    // default value is 1h or 3600000ms for idToken in cognito.
+  }, authToken?.expiration ?? 3600000);
 
   useEffect(() => {
     (isSuccess || isError) && setHasLoaded(true);

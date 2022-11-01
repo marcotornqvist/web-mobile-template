@@ -3,6 +3,7 @@ import { Todo, TodoContextType, UpdateTodoVariables } from "types";
 import { useContext } from "react";
 import { TodoContext } from "context/todoContext";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 // Get all todos
 export const useGetAllTodosByMe = () => {
@@ -14,7 +15,11 @@ export const useGetAllTodosByMe = () => {
     return data;
   };
 
-  return useQuery(["todos"], getTodos, {});
+  return useQuery(["todos"], getTodos, {
+    onError: (error: any) => {
+      toast.error(error?.message);
+    },
+  });
 };
 
 // Create a new todo
@@ -26,23 +31,25 @@ export const useCreateTodo = () => {
     (title) => axios.post("todos", { title }, { withCredentials: true }),
     {
       onMutate: async (title: string) => {
-        setTitle("");
-        // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-        await queryClient.cancelQueries(["todos"]);
+        if (title.length > 0) {
+          setTitle("");
+          // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+          await queryClient.cancelQueries(["todos"]);
 
-        // Create optimistic todo
-        const optimisticTodo = {
-          id: Math.random().toString(36).substring(4),
-          title,
-        };
+          // Create optimistic todo
+          const optimisticTodo = {
+            id: Math.random().toString(36).substring(4),
+            title,
+          };
 
-        // Optimistically update to the new value
-        queryClient.setQueryData<Todo[]>(["todos"], (previous: any) => [
-          optimisticTodo,
-          ...previous,
-        ]);
+          // Optimistically update to the new value
+          queryClient.setQueryData<Todo[]>(["todos"], (previous: any) => [
+            optimisticTodo,
+            ...previous,
+          ]);
 
-        return { optimisticTodo };
+          return { optimisticTodo };
+        }
       },
       // If the mutation fails, use the context returned from onMutate to roll back
       onSuccess: (result, variables, context) => {
@@ -53,13 +60,19 @@ export const useCreateTodo = () => {
           ),
         );
       },
-      onError: (error, variables, context) => {
+      onError: (error: any, variables, context) => {
         // Remove optimistic todo from the todos list
         queryClient.setQueryData(["todos"], (previous: any) =>
           previous.filter(
             (todo: any) => todo.id !== context?.optimisticTodo.id,
           ),
         );
+
+        if (error?.response?.data?.formErrors) {
+          error.formErrors = error.response.data.formErrors;
+        } else {
+          toast.error(error?.response?.data?.message);
+        }
       },
     },
   );
@@ -75,23 +88,41 @@ export const useUpdateTodo = () => {
       axios.patch(`todos/${id}`, { title }, { withCredentials: true }),
     {
       onMutate: async ({ title, id }: UpdateTodoVariables) => {
-        setTitle("");
-        // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-        await queryClient.cancelQueries(["todos"]);
+        if (title.length > 0) {
+          setTitle("");
+          // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+          await queryClient.cancelQueries(["todos"]);
 
-        const snapshot = await queryClient.getQueryData(["todos"]);
+          const snapshot: Todo[] | undefined = await queryClient.getQueryData([
+            "todos",
+          ]);
 
-        // Optimistically update to the new value
-        queryClient.setQueryData<Todo[]>(["todos"], (previous: any) =>
-          previous.map((item: Todo) =>
-            item.id === id ? { ...item, title } : item,
+          // Optimistically update to the new value
+          queryClient.setQueryData<Todo[]>(["todos"], (previous: any) =>
+            previous.map((item: Todo) =>
+              item.id === id ? { ...item, title } : item,
+            ),
+          );
+
+          return { snapshot, id };
+        }
+      },
+      onSuccess: (result, variables, context) => {
+        // Replace optimistic todo in the todos list with the result
+        queryClient.setQueryData(["todos"], (previous: any) =>
+          previous.map((todo: any) =>
+            todo.id === context?.id ? result.data : todo,
           ),
         );
-
-        return { snapshot };
       },
-      onError: (error, variables, context) => {
+      onError: (error: any, variables, context) => {
         queryClient.setQueryData(["todos"], () => context?.snapshot);
+
+        if (error?.response?.data?.formErrors) {
+          error.formErrors = error?.response?.data?.formErrors;
+        } else {
+          toast.error(error?.response?.data?.message);
+        }
       },
     },
   );
@@ -120,9 +151,10 @@ export const useDeleteTodo = () => {
 
         return { snapshot };
       },
-      onError: (error, variables, context) => {
+      onError: (error: any, variables, context) => {
         // Set the previous todo list
         queryClient.setQueryData(["todos"], () => context?.snapshot);
+        toast.error(error?.response?.data?.message);
       },
     },
   );
@@ -153,8 +185,9 @@ export const useToggleIsCompleteTodo = () => {
 
         return { snapshot };
       },
-      onError: (error, variables, context) => {
+      onError: (error: any, variables, context) => {
         queryClient.setQueryData(["todos"], () => context?.snapshot);
+        toast.error(error?.response?.data?.message);
       },
     },
   );

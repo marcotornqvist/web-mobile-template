@@ -15,12 +15,8 @@ export class UpdateEmailRequest {
   email: string;
 
   @IsString()
-  @MaxLength(255, {
-    message: 'Password must be shorter than or equal to 255 characters',
-  })
-  @MinLength(6, {
-    message: 'Password must be longer than or equal to 6 characters',
-  })
+  @MaxLength(255)
+  @MinLength(6)
   @ApiProperty({ required: true })
   password: string;
 }

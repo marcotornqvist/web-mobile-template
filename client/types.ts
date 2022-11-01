@@ -67,3 +67,14 @@ export interface RegisterVariables {
   password: string;
   confirmPassword: string;
 }
+
+export interface UpdateEmailVariables {
+  email: string;
+  password: string;
+}
+
+export interface UpdatePasswordVariables {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}

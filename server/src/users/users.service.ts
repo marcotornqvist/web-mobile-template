@@ -23,6 +23,7 @@ import {
 import { errorsType } from 'types';
 import { DeleteMeRequest } from './dto/delete-me.dto';
 import { User } from '@prisma/client';
+import { TodosService } from 'todos/todos.service';
 
 @Injectable()
 export class UsersService {
@@ -31,6 +32,7 @@ export class UsersService {
   constructor(
     private prisma: PrismaService,
     private authService: AuthService,
+    private todosService: TodosService,
     private readonly configService: ConfigService,
   ) {
     this.userPool = new CognitoUserPool({
@@ -67,9 +69,15 @@ export class UsersService {
   async updateEmail(
     userId: string,
     @Body() { email, password }: UpdateEmailRequest,
-  ): Promise<boolean> {
+  ): Promise<User> {
+    const formErrors: errorsType = {};
+
     // Checks that email doesn't exist
-    await this.validateEmail(email);
+    const emailError = await this.validateEmail(email);
+
+    if (emailError) {
+      formErrors.email = emailError;
+    }
 
     const cognitoUser = new CognitoUser({
       Username: userId,
@@ -81,6 +89,15 @@ export class UsersService {
       Password: password,
     });
 
+    // Throw formErrors if not empty
+    if (Object.keys(formErrors).length > 0) {
+      throw new UnauthorizedException({
+        statusCode: 401,
+        formErrors,
+        error: 'Unauthorized Request',
+      });
+    }
+
     return await this.prisma.$transaction(async (prisma) => {
       try {
         await this.authService.authenticateUser(
@@ -88,7 +105,7 @@ export class UsersService {
           authenticationDetails,
         );
 
-        await prisma.user.update({
+        const user = await prisma.user.update({
           where: {
             id: userId,
           },
@@ -97,7 +114,7 @@ export class UsersService {
           },
         });
 
-        const updateEmail: boolean = await new Promise((resolve, reject) => {
+        await new Promise((resolve, reject) => {
           cognitoUser.updateAttributes(
             [new CognitoUserAttribute({ Name: 'email', Value: email })],
             (err) => {
@@ -110,12 +127,19 @@ export class UsersService {
           );
         });
 
-        return updateEmail;
+        return user;
       } catch (err) {
-        console.log(err);
-
         if (err.code === 'NotAuthorizedException') {
-          throw new UnauthorizedException('Not Authorized.');
+          const formErrors = {
+            password: 'Password is not valid.',
+          };
+
+          // Throw formErrors if not empty
+          throw new UnauthorizedException({
+            statusCode: 401,
+            formErrors,
+            error: 'Unauthorized Request',
+          });
         }
 
         throw new InternalServerErrorException('Email could not be updated.');
@@ -128,14 +152,13 @@ export class UsersService {
     @Body()
     { currentPassword, newPassword, confirmPassword }: UpdatePasswordRequest,
   ): Promise<boolean> {
-    const fieldErrors: errorsType = {};
+    const formErrors: errorsType = {};
 
     // Check that newPassword/confirmPassword is not the same as the currentPassword parameter.
     if (currentPassword === newPassword) {
-      // Add object newPassword to fieldErrors object
-      fieldErrors.newPassword = [
-        "New password can't be the same as the current password.",
-      ];
+      // Add object newPassword to formErrors object
+      formErrors.newPassword =
+        "New password can't be the same as the current password.";
     }
 
     // Check if currentPassword matches the current users password.
@@ -144,10 +167,11 @@ export class UsersService {
       confirmPassword,
     );
 
-    // If validatePassword array is not empty
-    if (validatePassword && validatePassword.length > 0) {
-      // Add object confirmPassword to fieldErrors object
-      fieldErrors.confirmPassword = validatePassword;
+    // If validatePassword returns an error message
+    if (!validatePassword) {
+      // Add object confirmPassword to formErrors object
+      formErrors.confirmPassword = formErrors.confirmPassword =
+        "Confirm password doesn't match new password";
     }
 
     const cognitoUser = new CognitoUser({
@@ -160,11 +184,11 @@ export class UsersService {
       Password: currentPassword,
     });
 
-    // Throw fieldErrors if not empty
-    if (Object.keys(fieldErrors).length > 0) {
+    // Throw formErrors if not empty
+    if (Object.keys(formErrors).length > 0) {
       throw new BadRequestException({
         statusCode: 400,
-        fieldErrors,
+        formErrors,
         error: 'Bad Request',
       });
     }
@@ -187,10 +211,10 @@ export class UsersService {
 
       return changePassword;
     } catch (err) {
-      console.log(err);
-
       if (err.code === 'NotAuthorizedException') {
-        throw new UnauthorizedException('Not Authorized.');
+        throw new UnauthorizedException(
+          'The current password you entered is incorrect.',
+        );
       }
 
       throw new InternalServerErrorException('Password could not be updated.');
@@ -237,15 +261,24 @@ export class UsersService {
           });
         });
 
+        const { cachedTodos, cacheKey } =
+          await this.todosService.getCachedTodosByMe(userId);
+
         return deleteUser;
       } catch (err) {
         console.log(err);
+        if (err.code === 'NotAuthorizedException') {
+          throw new UnauthorizedException(
+            'The password you entered is incorrect.',
+          );
+        }
+
         throw new InternalServerErrorException('Something went wrong.');
       }
     });
   }
 
-  async validateEmail(email: string): Promise<void> {
+  async validateEmail(email: string): Promise<string | undefined> {
     const user = await this.prisma.user.findUnique({
       where: {
         email,
@@ -253,17 +286,19 @@ export class UsersService {
     });
 
     if (user) {
-      throw new ForbiddenException('Email already exists.');
+      return 'Email already exists.';
     }
   }
 
   async validatePassword(
     password: string,
     confirmPassword: string,
-  ): Promise<string[] | undefined> {
-    if (password !== confirmPassword) {
-      return ["Confirm password doesn't match new password"];
+  ): Promise<boolean> {
+    if (password === confirmPassword) {
+      return true;
     }
+
+    return false;
   }
 
   async getUserById(userId: string): Promise<User> {

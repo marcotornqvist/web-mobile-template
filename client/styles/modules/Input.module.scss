@@ -1,6 +1,6 @@
-@use '../abstracts/colors' as *;
-@use '../abstracts/border-radius' as *;
-@use '../abstracts/fonts' as *;
+@use "../abstracts/colors" as *;
+@use "../abstracts/border-radius" as *;
+@use "../abstracts/fonts" as *;
 
 .inputGroup {
   :global {
@@ -37,6 +37,61 @@
       border-radius: 6px;
       background: white;
       padding: 0 1rem;
+
+      input {
+        height: 100%;
+        width: 100%;
+        border: none;
+        outline: none;
+        background: none;
+      }
+
+      svg {
+        cursor: pointer;
+        width: 2rem;
+        fill: #d9d9d9 !important;
+        margin-left: 1rem;
+      }
+    }
+  }
+}
+
+.inputGroupBorder {
+  :global {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+
+    .top-message {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+
+      label,
+      span {
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      label {
+        color: black;
+      }
+
+      span {
+        color: $red;
+      }
+    }
+
+    .input-container {
+      display: flex;
+      align-items: center;
+      height: 3rem;
+      min-width: 100%;
+      border-radius: 6px;
+      background: #e9e9e9;
+      padding: 0 1rem;
+      // border: 1px solid $dark-blue;
 
       input {
         height: 100%;

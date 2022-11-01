@@ -1,9 +1,9 @@
-@use './abstracts/colors' as *;
-@use './abstracts/shadows' as *;
-@use './abstracts/breakpoints' as *;
-@use './abstracts/zindex' as *;
-@use './abstracts/fonts' as *;
-@use './abstracts/border-radius' as *;
+@use "./abstracts/colors" as *;
+@use "./abstracts/shadows" as *;
+@use "./abstracts/breakpoints" as *;
+@use "./abstracts/zindex" as *;
+@use "./abstracts/fonts" as *;
+@use "./abstracts/border-radius" as *;
 
 * {
   margin: 0;
@@ -29,6 +29,20 @@ html,
   flex-direction: column;
   min-height: 100%;
   padding-top: 80px;
+}
+
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  padding: 1rem;
 }
 
 // Prevent scroll hook under 920px

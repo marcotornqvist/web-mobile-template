@@ -1,5 +1,4 @@
-// export {};
-import { ReactNode, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useQueryClient } from "@tanstack/react-query";
 import { AuthToken } from "types";
@@ -21,7 +20,7 @@ export default function PrivateRoute({ hasLoaded, children }: IProps) {
   const guestRoutes = ["/register", "/login"];
 
   // These routes are only accessible when authenticated
-  const authRoutes = ["/"];
+  const authRoutes = ["/", "/account"];
 
   const firstPath = router.pathname.split("/")[1];
   const guestIsProtected = guestRoutes.indexOf("/" + firstPath) !== -1;
@@ -33,6 +32,7 @@ export default function PrivateRoute({ hasLoaded, children }: IProps) {
     }
 
     if (hasLoaded && authorization && guestIsProtected) {
+      console.log("moi");
       router.push("/");
     }
   }, [hasLoaded, authorization, authIsProtected, guestIsProtected]);
